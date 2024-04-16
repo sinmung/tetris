@@ -57,7 +57,7 @@ body{
 .game-text > button{
     padding: 0.5rem 1rem;
     color: #fff;
-    background: salmon;
+    background: red;
     border: none;
     cursor: pointer ;
 }
@@ -67,7 +67,7 @@ body{
 }
 
 .bar{
-    background: salmon;
+    background: blue;
 }
 
 .zee{

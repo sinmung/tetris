@@ -16,6 +16,8 @@ let duration = 500;
 let downInterval;
 let tempMovingItem;
 
+let gameover = false;
+
 const movingItem = {
     type:"tree",
     direction:0,
@@ -28,7 +30,7 @@ init()
 // function
 
 function init(){
-
+    gameover = false;
     tempMovingItem = { ...movingItem};
     for(let i = 0; i<GAME_ROWS;i++){
         prependNewLine();
@@ -36,11 +38,10 @@ function init(){
     generateNewBlock();
 }
 
-
 function prependNewLine(){
     const li = document.createElement("li");
     const ul = document.createElement("ul");
-    for (let j = 0; j<10; j++){
+    for (let j = 0; j<GAME_COLS; j++){
         const matrix = document.createElement("li");
         ul.prepend(matrix);
     }
@@ -49,40 +50,49 @@ function prependNewLine(){
 }
 
 function renderBlocks(moveType = ""){
+    let possible = true;
     const {type, direction, top, left} = tempMovingItem;
-    const movingBlocks = document.querySelectorAll(".moving");
-    movingBlocks.forEach(moving=>{
-        moving.classList.remove(type, "moving");
-    })
-    BLOCKS[type][direction].some(block=>{
+    const arr = [];
+    BLOCKS[type][direction].some(block=> {
         const x = block[0] + left;
         const y = block[1] + top;
-        const  target = playground.childNodes[y] ? playground.childNodes[y].childNodes[0].childNodes[x] : null;
+        const target = playground.childNodes[y] ? playground.childNodes[y].childNodes[0].childNodes[x] : null;
         const isAvailable = checkEmpty(target);
-        if(isAvailable){
-            target.classList.add(type, "moving");
-        }else {
-            tempMovingItem = {...movingItem}
-            if(moveType === 'retry'){
-                clearInterval(downInterval);
-                showGameOverText();
-
-            }
-            setTimeout(()=>{
-                renderBlocks('retry');
-                if (moveType ==="top"){
-                    seizeBlock();
-                }
-                renderBlocks();
-            }, 0)
-            //renderBlocks();
+        arr.push([x, y]);
+        if (!isAvailable) {
+            possible = false;
+        }
+    });
+    if (possible){
+        const movingBlocks = document.querySelectorAll(".moving");
+        movingBlocks.forEach(moving=>{
+            moving.classList.remove(type, "moving");
+        });
+        for (let i =0;i<4;i++){
+            playground.childNodes[arr[i][1]].childNodes[0].childNodes[arr[i][0]].classList.add(type, "moving");
+        }
+        movingItem.left = left;
+        movingItem.top = top;
+        movingItem. direction = direction;
+    }
+    else {
+        tempMovingItem = {...movingItem}
+        if(moveType === 'retry'){
+            clearInterval(downInterval);
+            gameover = true;
+            showGameOverText();
             return true;
         }
+        setTimeout(()=>{
+            renderBlocks('retry');
+            if (moveType ==="top"){
+                seizeBlock();
+            }
+        }, 0)
+        //renderBlocks();
+        return true;
+    }
 
-    })
-    movingItem.left = left;
-    movingItem.top = top;
-    movingItem.direction = direction;
 }
 
 function showGameOverText(){
@@ -163,27 +173,36 @@ function dropBlock(){
 }
 
 // event handling
-
+document.addEventListener("keyup", e=>{
+    if(!gameover){
+        switch (e.keyCode){
+            case 38:
+                changeDirection();
+                break;
+            default:
+                break;
+        }
+    }
+})
 document.addEventListener("keydown", e=>{
-    switch (e.keyCode){
-        case 39:
-            moveBlock("left", 1);
-            break;
-        case 37:
-            moveBlock("left", -1);
-            break;
-        case 40:
-            moveBlock("top", 1);
-            break;
-        case 38:
-            changeDirection();
-            break;
-        case 32:
-            dropBlock();
-            break;
-        default:
-            break;
+    if(!gameover){
+        switch (e.keyCode){
+            case 39:
+                moveBlock("left", 1);
+                break;
+            case 37:
+                moveBlock("left", -1);
+                break;
+            case 40:
+                moveBlock("top", 1);
+                break;
+            case 32:
+                dropBlock();
+                break;
+            default:
+                break;
 
+        }
     }
 
 })
